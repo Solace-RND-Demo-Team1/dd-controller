@@ -1,49 +1,74 @@
 <html lang="en">
-  <head>
-    <title>Solace Web Messaging API for JavaScript Publish/Subscribe tutorial - Topic Subscriber</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge;" />
-    <meta charset="utf-8"/>
 
-    <!-- UIkit CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.42/css/uikit.min.css" />
+<head>
+  <title>Solace Web Messaging API for JavaScript Publish/Subscribe tutorial - Topic Subscriber</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge;" />
+  <meta charset="utf-8" />
 
-    <!-- Load Solace Web Messaging API for JavaScript -->
-    <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
+  <!-- UIkit CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.42/css/uikit.min.css" />
 
-    <!-- Load the PublishSubscribe Topic Subscriber tutorial -->
-    <script src="env.js"></script>
-    <script src="lobby.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+  <!-- UIkit JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.42/js/uikit.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.42/js/uikit-icons.min.js"></script>
 
-    <!-- Execute the PublishSubscribe Topic Subscriber tutorial -->
-    <script>
-      var subscriber = null;
-      window.onload = function () {
-        // Initialize factory with the most recent API defaults
-        var factoryProps = new solace.SolclientFactoryProperties();
-        factoryProps.profile = solace.SolclientFactoryProfiles.version10;
-        solace.SolclientFactory.init(factoryProps);
-        // enable logging to JavaScript console at WARN level
-        // NOTICE: works only with "solclientjs-debug.js"
-        solace.SolclientFactory.setLogLevel(solace.LogLevel.WARN);
-        // create the subscriber, specifying name of the subscription topic
-        subscriber = new TopicSubscriber('dd/t/players');
-        subscriber.connect();
-        // assign buttons to the subscriber functions
-        document.getElementById("connect").addEventListener("click", function () {
-           subscriber.subscribe(); 
-           });
-      };
-      function iframeloaded(){
-        if (subscriber) {
-          subscriber.connectToSolace();
-        }
-      };
-    </script>
+  <!-- Load Solace Web Messaging API for JavaScript -->
+  <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
+
+  <!-- Load the PublishSubscribe Topic Subscriber tutorial -->
+  <script src="env.js"></script>
+  <script src="lobby.js"></script>
+
+  <!-- Execute the PublishSubscribe Topic Subscriber tutorial -->
+  <script>
+    var subscriber = null;
+    window.onload = function () {
+      // Initialize factory with the most recent API defaults
+      var factoryProps = new solace.SolclientFactoryProperties();
+      factoryProps.profile = solace.SolclientFactoryProfiles.version10;
+      solace.SolclientFactory.init(factoryProps);
+      // enable logging to JavaScript console at WARN level
+      // NOTICE: works only with "solclientjs-debug.js"
+      solace.SolclientFactory.setLogLevel(solace.LogLevel.WARN);
+      // create the subscriber, specifying name of the subscription topic
+      subscriber = new TopicSubscriber('dd/t/players');
+      subscriber.connect();
+      // assign buttons to the subscriber functions
+      document.getElementById("connect").addEventListener("click", function () {
+        subscriber.subscribe();
+      });
+    };
+  </script>
 </head>
+
 <body>
-<button class="uk-button" type="button" id="connect">Open Lobby</button>
-
-</div>
-
+  <button class="uk-button" type="button" id="connect">Open Lobby</button>
+  <button class="uk-button" type="button" id="start">Start Game</button>
+  <div id="player-rows">
+    <table class="uk-table">
+      <thead>
+        <tr>
+          <td>Position</td>
+          <td>Player Name</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(player, index) in players">
+          <td>{{ index }}</td>
+          <td>{{ player }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script>
+    var players = [];
+    var lobbyTable = new Vue({
+      el: '#player-rows',
+      data: {
+          players: players
+      }
+    });
+  </script>
 </body>
 </html>

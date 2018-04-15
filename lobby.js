@@ -72,6 +72,8 @@ var TopicSubscriber = function (topicName) {
         subscriber.session.on(solace.SessionEventCode.MESSAGE, function (message) {
             subscriber.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
                 message.dump());
+            let joiner = message.getBinaryAttachment();
+            players.push(joiner);
         });
 
         subscriber.connectToSolace();

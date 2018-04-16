@@ -1,12 +1,13 @@
-var TopicSubscriber = function (topicName) {
+var SolPubSub = function () {
     'use strict';
-    var subscriber = {};
-    subscriber.session = null;
-    subscriber.topicName = topicName;
-    subscriber.subscribed = false;
+    var solPubSub = {};
+    solPubSub.session = null;
+    solPubSub.joinTopicName = 'dd/t/join';
+    solPubSub.lobbyTopicName = 'dd/t/lobby';
+    solPubSub.subscribed = false;
 
     // Logger
-    subscriber.log = function (line) {
+    solPubSub.log = function (line) {
         var now = new Date();
         var time = [('0' + now.getHours()).slice(-2), ('0' + now.getMinutes()).slice(-2),
             ('0' + now.getSeconds()).slice(-2)];
@@ -14,22 +15,22 @@ var TopicSubscriber = function (topicName) {
         console.log(timestamp + line);
     };
 
-    subscriber.log('\n*** Subscriber to topic "' + subscriber.topicName + '" is ready to connect ***');
+    solPubSub.log('\n*** solPubSub to topic "' + solPubSub.joinTopicName + '" is ready to connect ***');
 
     // Establishes connection to Solace router
-    subscriber.connect = function () {
+    solPubSub.connect = function () {
         // extract params
-        if (subscriber.session !== null) {
-            subscriber.log('Already connected and ready to subscribe.');
+        if (solPubSub.session !== null) {
+            solPubSub.log('Already connected and ready to subscribe.');
             return;
         }
 
-        subscriber.log('Connecting to Solace message router using url: ' + hostUrl);
-        subscriber.log('Client username: ' + username);
-        subscriber.log('Solace message router VPN name: ' + msgVpn);
+        solPubSub.log('Connecting to Solace message router using url: ' + hostUrl);
+        solPubSub.log('Client username: ' + username);
+        solPubSub.log('Solace message router VPN name: ' + msgVpn);
         // create session
         try {
-            subscriber.session = solace.SolclientFactory.createSession({
+            solPubSub.session = solace.SolclientFactory.createSession({
                 // solace.SessionProperties
                 url:      hostUrl,
                 vpnName:  msgVpn,
@@ -37,118 +38,118 @@ var TopicSubscriber = function (topicName) {
                 password: password,
             });
         } catch (error) {
-            subscriber.log(error.toString());
+            solPubSub.log(error.toString());
         }
         // define session event listeners
-        subscriber.session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
-            subscriber.log('=== Successfully connected and ready to subscribe. ===');
+        solPubSub.session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
+            solPubSub.log('=== Successfully connected and ready to subscribe. ===');
         });
-        subscriber.session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, function (sessionEvent) {
-            subscriber.log('Connection failed to the message router: ' + sessionEvent.infoStr +
+        solPubSub.session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, function (sessionEvent) {
+            solPubSub.log('Connection failed to the message router: ' + sessionEvent.infoStr +
                 ' - check correct parameter values and connectivity!');
         });
-        subscriber.session.on(solace.SessionEventCode.DISCONNECTED, function (sessionEvent) {
-            subscriber.log('Disconnected.');
-            subscriber.subscribed = false;
-            if (subscriber.session !== null) {
-                subscriber.session.dispose();
-                subscriber.session = null;
+        solPubSub.session.on(solace.SessionEventCode.DISCONNECTED, function (sessionEvent) {
+            solPubSub.log('Disconnected.');
+            solPubSub.subscribed = false;
+            if (solPubSub.session !== null) {
+                solPubSub.session.dispose();
+                solPubSub.session = null;
             }
         });
-        subscriber.session.on(solace.SessionEventCode.SUBSCRIPTION_ERROR, function (sessionEvent) {
-            subscriber.log('Cannot subscribe to topic: ' + sessionEvent.correlationKey);
+        solPubSub.session.on(solace.SessionEventCode.SUBSCRIPTION_ERROR, function (sessionEvent) {
+            solPubSub.log('Cannot subscribe to topic: ' + sessionEvent.correlationKey);
         });
-        subscriber.session.on(solace.SessionEventCode.SUBSCRIPTION_OK, function (sessionEvent) {
-            if (subscriber.subscribed) {
-                subscriber.subscribed = false;
-                subscriber.log('Successfully unsubscribed from topic: ' + sessionEvent.correlationKey);
+        solPubSub.session.on(solace.SessionEventCode.SUBSCRIPTION_OK, function (sessionEvent) {
+            if (solPubSub.subscribed) {
+                solPubSub.subscribed = false;
+                solPubSub.log('Successfully unsubscribed from topic: ' + sessionEvent.correlationKey);
             } else {
-                subscriber.subscribed = true;
-                subscriber.log('Successfully subscribed to topic: ' + sessionEvent.correlationKey);
-                subscriber.log('=== Ready to receive messages. ===');
+                solPubSub.subscribed = true;
+                solPubSub.log('Successfully subscribed to topic: ' + sessionEvent.correlationKey);
+                solPubSub.log('=== Ready to receive messages. ===');
             }
         });
         // define message event listener
-        subscriber.session.on(solace.SessionEventCode.MESSAGE, function (message) {
-            subscriber.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
+        solPubSub.session.on(solace.SessionEventCode.MESSAGE, function (message) {
+            solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
                 message.dump());
             let joiner = message.getBinaryAttachment();
             players.push(joiner);
         });
 
-        subscriber.connectToSolace();
+        solPubSub.connectToSolace();
     };
 
     // Actually connects the session triggered when the iframe has been loaded - see in html code
-    subscriber.connectToSolace = function () {
+    solPubSub.connectToSolace = function () {
         try {
-            subscriber.session.connect();
+            solPubSub.session.connect();
         } catch (error) {
-            subscriber.log(error.toString());
+            solPubSub.log(error.toString());
         }
     };
 
     // Subscribes to topic on Solace message router
-    subscriber.subscribe = function () {
-        if (subscriber.session !== null) {
-            if (subscriber.subscribed) {
-                subscriber.log('Already subscribed to "' + subscriber.topicName
+    solPubSub.subscribe = function () {
+        if (solPubSub.session !== null) {
+            if (solPubSub.subscribed) {
+                solPubSub.log('Already subscribed to "' + solPubSub.joinTopicName
                     + '" and ready to receive messages.');
             } else {
-                subscriber.log('Subscribing to topic: ' + subscriber.topicName);
+                solPubSub.log('Subscribing to topic: ' + solPubSub.joinTopicName);
                 try {
-                    subscriber.session.subscribe(
-                        solace.SolclientFactory.createTopicDestination(subscriber.topicName),
+                    solPubSub.session.subscribe(
+                        solace.SolclientFactory.createTopicDestination(solPubSub.joinTopicName),
                         true, // generate confirmation when subscription is added successfully
-                        subscriber.topicName, // use topic name as correlation key
+                        solPubSub.joinTopicName, // use topic name as correlation key
                         10000 // 10 seconds timeout for this operation
                     );
                 } catch (error) {
-                    subscriber.log(error.toString());
+                    solPubSub.log(error.toString());
                 }
             }
         } else {
-            subscriber.log('Cannot subscribe because not connected to Solace message router.');
+            solPubSub.log('Cannot subscribe because not connected to Solace message router.');
         }
     };
 
     // Unsubscribes from topic on Solace message router
-    subscriber.unsubscribe = function () {
-        if (subscriber.session !== null) {
-            if (subscriber.subscribed) {
-                subscriber.log('Unsubscribing from topic: ' + subscriber.topicName);
+    solPubSub.unsubscribe = function () {
+        if (solPubSub.session !== null) {
+            if (solPubSub.subscribed) {
+                solPubSub.log('Unsubscribing from topic: ' + solPubSub.joinTopicName);
                 try {
-                    subscriber.session.unsubscribe(
-                        solace.SolclientFactory.createTopicDestination(subscriber.topicName),
+                    solPubSub.session.unsubscribe(
+                        solace.SolclientFactory.createTopicDestination(solPubSub.joinTopicName),
                         true, // generate confirmation when subscription is removed successfully
-                        subscriber.topicName, // use topic name as correlation key
+                        solPubSub.joinTopicName, // use topic name as correlation key
                         10000 // 10 seconds timeout for this operation
                     );
                 } catch (error) {
-                    subscriber.log(error.toString());
+                    solPubSub.log(error.toString());
                 }
             } else {
-                subscriber.log('Cannot unsubscribe because not subscribed to the topic "'
-                    + subscriber.topicName + '"');
+                solPubSub.log('Cannot unsubscribe because not subscribed to the topic "'
+                    + solPubSub.joinTopicName + '"');
             }
         } else {
-            subscriber.log('Cannot unsubscribe because not connected to Solace message router.');
+            solPubSub.log('Cannot unsubscribe because not connected to Solace message router.');
         }
     };
 
     // Gracefully disconnects from Solace message router
-    subscriber.disconnect = function () {
-        subscriber.log('Disconnecting from Solace message router...');
-        if (subscriber.session !== null) {
+    solPubSub.disconnect = function () {
+        solPubSub.log('Disconnecting from Solace message router...');
+        if (solPubSub.session !== null) {
             try {
-                subscriber.session.disconnect();
+                solPubSub.session.disconnect();
             } catch (error) {
-                subscriber.log(error.toString());
+                solPubSub.log(error.toString());
             }
         } else {
-            subscriber.log('Not connected to Solace message router.');
+            solPubSub.log('Not connected to Solace message router.');
         }
     };
 
-    return subscriber;
+    return solPubSub;
 };

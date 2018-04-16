@@ -1,7 +1,7 @@
 <html lang="en">
 
 <head>
-  <title>Solace Web Messaging API for JavaScript Publish/Subscribe tutorial - Topic Subscriber</title>
+  <title>Solace Web Messaging API for JavaScript Publish/Subscribe tutorial - Topic solPubSub</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge;" />
   <meta charset="utf-8" />
 
@@ -15,14 +15,11 @@
 
   <!-- Load Solace Web Messaging API for JavaScript -->
   <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
-
-  <!-- Load the PublishSubscribe Topic Subscriber tutorial -->
   <script src="env.js"></script>
   <script src="lobby.js"></script>
 
-  <!-- Execute the PublishSubscribe Topic Subscriber tutorial -->
   <script>
-    var subscriber = null;
+    var solPubSub = null;
     window.onload = function () {
       // Initialize factory with the most recent API defaults
       var factoryProps = new solace.SolclientFactoryProperties();
@@ -31,12 +28,11 @@
       // enable logging to JavaScript console at WARN level
       // NOTICE: works only with "solclientjs-debug.js"
       solace.SolclientFactory.setLogLevel(solace.LogLevel.WARN);
-      // create the subscriber, specifying name of the subscription topic
-      subscriber = new TopicSubscriber('dd/t/players');
-      subscriber.connect();
-      // assign buttons to the subscriber functions
+      solPubSub = new SolPubSub();
+      solPubSub.connect();
+      
       document.getElementById("connect").addEventListener("click", function () {
-        subscriber.subscribe();
+        solPubSub.subscribe();
       });
     };
   </script>

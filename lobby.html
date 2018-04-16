@@ -32,7 +32,7 @@
       solPubSub.connect();
       
       document.getElementById("connect").addEventListener("click", function () {
-        solPubSub.subscribe();
+        solPubSub.subscribe('dd/t/join');
       });
     };
   </script>
@@ -51,7 +51,7 @@
       </thead>
       <tbody>
         <tr v-for="(player, index) in players">
-          <td>{{ index }}</td>
+          <td>{{ index + 1 }}</td>
           <td>{{ player }}</td>
         </tr>
       </tbody>

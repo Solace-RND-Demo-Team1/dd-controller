@@ -2,8 +2,6 @@ var SolPubSub = function () {
     'use strict';
     var solPubSub = {};
     solPubSub.session = null;
-    solPubSub.joinTopicName = 'dd/t/join';
-    solPubSub.lobbyTopicName = 'dd/t/lobby';
     solPubSub.subscribed = false;
 
     // Logger
@@ -15,7 +13,7 @@ var SolPubSub = function () {
         console.log(timestamp + line);
     };
 
-    solPubSub.log('\n*** solPubSub to topic "' + solPubSub.joinTopicName + '" is ready to connect ***');
+    solPubSub.log('\n*** solPubSub is ready to connect ***');
 
     // Establishes connection to Solace router
     solPubSub.connect = function () {
@@ -42,7 +40,7 @@ var SolPubSub = function () {
         }
         // define session event listeners
         solPubSub.session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
-            solPubSub.log('=== Successfully connected and ready to subscribe. ===');
+            solPubSub.log('=== Successfully connected. ===');
         });
         solPubSub.session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, function (sessionEvent) {
             solPubSub.log('Connection failed to the message router: ' + sessionEvent.infoStr +
@@ -75,12 +73,12 @@ var SolPubSub = function () {
                 message.dump());
             let joiner = message.getBinaryAttachment();
             players.push(joiner);
+            solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
         });
 
         solPubSub.connectToSolace();
     };
 
-    // Actually connects the session triggered when the iframe has been loaded - see in html code
     solPubSub.connectToSolace = function () {
         try {
             solPubSub.session.connect();
@@ -90,18 +88,16 @@ var SolPubSub = function () {
     };
 
     // Subscribes to topic on Solace message router
-    solPubSub.subscribe = function () {
+    solPubSub.subscribe = function (topicName) {
         if (solPubSub.session !== null) {
             if (solPubSub.subscribed) {
-                solPubSub.log('Already subscribed to "' + solPubSub.joinTopicName
-                    + '" and ready to receive messages.');
+                solPubSub.log('Already subscribed to and ready to receive messages.');
             } else {
-                solPubSub.log('Subscribing to topic: ' + solPubSub.joinTopicName);
                 try {
                     solPubSub.session.subscribe(
-                        solace.SolclientFactory.createTopicDestination(solPubSub.joinTopicName),
+                        solace.SolclientFactory.createTopicDestination(topicName),
                         true, // generate confirmation when subscription is added successfully
-                        solPubSub.joinTopicName, // use topic name as correlation key
+                        topicName, // use topic name as correlation key
                         10000 // 10 seconds timeout for this operation
                     );
                 } catch (error) {
@@ -114,27 +110,44 @@ var SolPubSub = function () {
     };
 
     // Unsubscribes from topic on Solace message router
-    solPubSub.unsubscribe = function () {
+    solPubSub.unsubscribe = function (topicName) {
         if (solPubSub.session !== null) {
             if (solPubSub.subscribed) {
-                solPubSub.log('Unsubscribing from topic: ' + solPubSub.joinTopicName);
                 try {
                     solPubSub.session.unsubscribe(
-                        solace.SolclientFactory.createTopicDestination(solPubSub.joinTopicName),
+                        solace.SolclientFactory.createTopicDestination(topicName),
                         true, // generate confirmation when subscription is removed successfully
-                        solPubSub.joinTopicName, // use topic name as correlation key
+                        topicName, // use topic name as correlation key
                         10000 // 10 seconds timeout for this operation
                     );
                 } catch (error) {
                     solPubSub.log(error.toString());
                 }
             } else {
-                solPubSub.log('Cannot unsubscribe because not subscribed to the topic "'
-                    + solPubSub.joinTopicName + '"');
+                solPubSub.log('Cannot unsubscribe because not subscribed to the topic');
             }
         } else {
             solPubSub.log('Cannot unsubscribe because not connected to Solace message router.');
         }
+    };
+
+    solPubSub.publish = function (msg, topicName) {
+        if (solPubSub.session !== null) {
+            var messageText = msg;
+            var message = solace.SolclientFactory.createMessage();
+            message.setDestination(solace.SolclientFactory.createTopicDestination(topicName));
+            message.setBinaryAttachment(messageText);
+            message.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+            solPubSub.log('Publishing message "' + messageText + '" to topic "' + topicName + '"...');
+            try {
+                solPubSub.session.send(message);
+                solPubSub.log('Message published.');
+            } catch (error) {
+                solPubSub.log(error.toString());
+            }
+        } else {
+            solPubSub.log('Cannot publish because not connected to Solace message router.');
+        } 
     };
 
     // Gracefully disconnects from Solace message router

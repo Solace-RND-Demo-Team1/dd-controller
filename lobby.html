@@ -16,7 +16,7 @@
   <!-- Load Solace Web Messaging API for JavaScript -->
   <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
   <script src="env.js"></script>
-  <script src="lobby.js"></script>
+  <script src="solpubsub.js"></script>
 
   <script>
     var solPubSub = null;
@@ -51,8 +51,8 @@
       </thead>
       <tbody>
         <tr v-for="(player, index) in players">
-          <td>{{ index + 1 }}</td>
-          <td>{{ player }}</td>
+          <td>{{ player.position }}</td>
+          <td>{{ player.name }}</td>
         </tr>
       </tbody>
     </table>

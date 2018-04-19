@@ -72,13 +72,13 @@ var SolPubSub = function () {
             solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
                 message.dump());
             let joinerName = message.getBinaryAttachment();
-            let joinerRow = {
-                position: 0,
-                name: joinerName,
-                status: 'waiting'
-            }
+            let joinerRow = {};
             let position = players.push(joinerRow);
-            players[position - 1].position = position;
+            players[position] = {
+                name: joinerName,
+                position: position,
+                status: "waiting"
+            }
             solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
         });
 

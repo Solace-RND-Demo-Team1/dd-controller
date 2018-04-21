@@ -69,17 +69,23 @@ var SolPubSub = function () {
         });
         // define message event listener
         solPubSub.session.on(solace.SessionEventCode.MESSAGE, function (message) {
-            solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
-                message.dump());
-            let joinerName = message.getBinaryAttachment();
-            let joinerRow = {};
-            let position = players.push(joinerRow);
-            players[position] = {
-                name: joinerName,
-                position: position,
-                status: "waiting"
+            let destination = message.getDestination();
+            if (destination.getName() === 'dd/t/lobby/req') {
+                solPubSub.reply(message);
+            } else {
+                solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
+                    message.dump());
+                let joinerName = message.getBinaryAttachment();
+                let joinerRow = {};
+                let position = players.push(joinerRow);
+                players[position] = {
+                    name: joinerName,
+                    position: position,
+                    status: "waiting"
+                }
+                solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
             }
-            solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
+            
         });
 
         solPubSub.connectToSolace();
@@ -96,19 +102,15 @@ var SolPubSub = function () {
     // Subscribes to topic on Solace message router
     solPubSub.subscribe = function (topicName) {
         if (solPubSub.session !== null) {
-            if (solPubSub.subscribed) {
-                solPubSub.log('Already subscribed to and ready to receive messages.');
-            } else {
-                try {
-                    solPubSub.session.subscribe(
-                        solace.SolclientFactory.createTopicDestination(topicName),
-                        true, // generate confirmation when subscription is added successfully
-                        topicName, // use topic name as correlation key
-                        10000 // 10 seconds timeout for this operation
-                    );
-                } catch (error) {
-                    solPubSub.log(error.toString());
-                }
+            try {
+                solPubSub.session.subscribe(
+                    solace.SolclientFactory.createTopicDestination(topicName),
+                    false, // generate confirmation when subscription is added successfully
+                    topicName, // use topic name as correlation key
+                    10000 // 10 seconds timeout for this operation
+                );
+            } catch (error) {
+                solPubSub.log(error.toString());
             }
         } else {
             solPubSub.log('Cannot subscribe because not connected to Solace message router.');
@@ -118,19 +120,15 @@ var SolPubSub = function () {
     // Unsubscribes from topic on Solace message router
     solPubSub.unsubscribe = function (topicName) {
         if (solPubSub.session !== null) {
-            if (solPubSub.subscribed) {
-                try {
-                    solPubSub.session.unsubscribe(
-                        solace.SolclientFactory.createTopicDestination(topicName),
-                        true, // generate confirmation when subscription is removed successfully
-                        topicName, // use topic name as correlation key
-                        10000 // 10 seconds timeout for this operation
-                    );
-                } catch (error) {
-                    solPubSub.log(error.toString());
-                }
-            } else {
-                solPubSub.log('Cannot unsubscribe because not subscribed to the topic');
+            try {
+                solPubSub.session.unsubscribe(
+                    solace.SolclientFactory.createTopicDestination(topicName),
+                    false, // generate confirmation when subscription is removed successfully
+                    topicName, // use topic name as correlation key
+                    10000 // 10 seconds timeout for this operation
+                );
+            } catch (error) {
+                solPubSub.log(error.toString());
             }
         } else {
             solPubSub.log('Cannot unsubscribe because not connected to Solace message router.');
@@ -163,7 +161,7 @@ var SolPubSub = function () {
             var reply = solace.SolclientFactory.createMessage();
             var sdtContainer = message.getSdtContainer();
             if (sdtContainer.getType() === solace.SDTFieldType.STRING) {
-                var replyText = message.getSdtContainer().getValue() + " - Sample Reply";
+                var replyText = JSON.stringify(players);
                 reply.setSdtContainer(solace.SDTField.create(solace.SDTFieldType.STRING, replyText));
                 solPubSub.session.sendReply(message, reply);
                 solPubSub.log('Replied.');

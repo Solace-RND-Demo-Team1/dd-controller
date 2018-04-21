@@ -33,6 +33,7 @@
       
       document.getElementById("connect").addEventListener("click", function () {
         solPubSub.subscribe('dd/t/join');
+        solPubSub.subscribe('dd/t/lobby/req');
       });
     };
   </script>

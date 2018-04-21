@@ -156,6 +156,23 @@ var SolPubSub = function () {
         } 
     };
 
+    solPubSub.reply = function (message) {
+        solPubSub.log('Received message: "' + message.getSdtContainer().getValue() + '", details:\n' + message.dump());
+        solPubSub.log('Replying...');
+        if (solPubSub.session !== null) {
+            var reply = solace.SolclientFactory.createMessage();
+            var sdtContainer = message.getSdtContainer();
+            if (sdtContainer.getType() === solace.SDTFieldType.STRING) {
+                var replyText = message.getSdtContainer().getValue() + " - Sample Reply";
+                reply.setSdtContainer(solace.SDTField.create(solace.SDTFieldType.STRING, replyText));
+                solPubSub.session.sendReply(message, reply);
+                solPubSub.log('Replied.');
+            }
+        } else {
+            solPubSub.log('Cannot reply: not connected to Solace message router.');
+        }
+    };
+
     // Gracefully disconnects from Solace message router
     solPubSub.disconnect = function () {
         solPubSub.log('Disconnecting from Solace message router...');

@@ -69,23 +69,26 @@ var SolPubSub = function () {
         });
         // define message event listener
         solPubSub.session.on(solace.SessionEventCode.MESSAGE, function (message) {
+            solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
+                message.dump());
             let destination = message.getDestination();
             if (destination.getName() === 'dd/t/lobby/req') {
                 solPubSub.reply(message);
-            } else {
-                solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' +
-                    message.dump());
+            } else if (destination.getName().startsWith('dd/t/join')) {                
                 let joinerName = message.getBinaryAttachment();
-                let joinerRow = {};
-                let position = players.push(joinerRow);
-                players[position] = {
+                let position = players.push({});
+                let joinerRow = {
                     name: joinerName,
                     position: position,
                     status: "waiting"
-                }
+                };
+                players.splice(position - 1, 1, joinerRow);
+                
+
                 solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
-            }
-            
+            } else if (destination.getName().startsWith('dd/t/active/')) {
+                solPubSub.log(message.getBinaryAttachment());
+            }            
         });
 
         solPubSub.connectToSolace();

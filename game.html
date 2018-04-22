@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html class="no-js">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Load Solace Web Messaging API for JavaScript -->
+        <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
+        <script src="env.js"></script>
+        <script src="solpubsub.js"></script>
+
+        <script>
+            var solPubSub = null;
+            window.onload = function () {
+                // Initialize factory with the most recent API defaults
+                var factoryProps = new solace.SolclientFactoryProperties();
+                factoryProps.profile = solace.SolclientFactoryProfiles.version10;
+                solace.SolclientFactory.init(factoryProps);
+                // enable logging to JavaScript console at WARN level
+                // NOTICE: works only with "solclientjs-debug.js"
+                solace.SolclientFactory.setLogLevel(solace.LogLevel.WARN);
+                solPubSub = new SolPubSub();
+                solPubSub.connect();
+
+                solPubSub.session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
+                    solPubSub.subscribe('dd/t/active/*');
+                });
+            };
+        </script>        
+    </head>
+    <body>
+
+        
+    </body>
+</html>

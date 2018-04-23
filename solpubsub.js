@@ -74,7 +74,7 @@ var SolPubSub = function () {
             let destination = message.getDestination();
             if (destination.getName() === 'dd/t/lobby/req') {
                 solPubSub.reply(message);
-            } else if (destination.getName().startsWith('dd/t/join')) {                
+            } else if (destination.getName() === 'dd/t/join') {                
                 let joinerName = message.getBinaryAttachment();
                 let position = players.push({});
                 let joinerRow = {

@@ -73,19 +73,27 @@ var SolPubSub = function () {
                 message.dump());
             let destination = message.getDestination();
             if (destination.getName() === 'dd/t/lobby/req') {
-                solPubSub.reply(message);
+                solPubSub.reply(message, JSON.stringify(players));
             } else if (destination.getName() === 'dd/t/join') {                
-                let joinerName = message.getSdtContainer().getValue();
-                let position = players.push({});
-                let joinerRow = {
-                    name: joinerName,
-                    position: position,
-                    status: "waiting"
-                };
-                players.splice(position - 1, 1, joinerRow);
-                
-
-                solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
+                let joinerName = message.getBinaryAttachment();
+                if (players.findIndex( function (element, index) {
+                    if (element.name === joinerName) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }) === -1) {
+                    let position = players.push({});
+                    let joinerRow = {
+                        name: joinerName,
+                        position: position,
+                        status: "waiting"
+                    };
+                    players.splice(position - 1, 1, joinerRow);;
+                    solPubSub.reply(message, 'SUCCESS');
+                } else {
+                    solPubSub.reply(message, 'DUP_NAME');
+                }          
             } else if (destination.getName().startsWith('dd/t/active/')) {
                 solPubSub.log(message.getBinaryAttachment());
             }            
@@ -157,18 +165,14 @@ var SolPubSub = function () {
         } 
     };
 
-    solPubSub.reply = function (message) {
-        solPubSub.log('Received message: "' + message.getSdtContainer().getValue() + '", details:\n' + message.dump());
+    solPubSub.reply = function (message, replyMsg) {
+        solPubSub.log('Received message: "' + message.getBinaryAttachment() + '", details:\n' + message.dump());
         solPubSub.log('Replying...');
         if (solPubSub.session !== null) {
             var reply = solace.SolclientFactory.createMessage();
-            var sdtContainer = message.getSdtContainer();
-            if (sdtContainer.getType() === solace.SDTFieldType.STRING) {
-                var replyText = JSON.stringify(players);
-                reply.setSdtContainer(solace.SDTField.create(solace.SDTFieldType.STRING, replyText));
-                solPubSub.session.sendReply(message, reply);
-                solPubSub.log('Replied.');
-            }
+            reply.setBinaryAttachment(replyMsg);
+            solPubSub.session.sendReply(message, reply);
+            solPubSub.log('Replied.');
         } else {
             solPubSub.log('Cannot reply: not connected to Solace message router.');
         }

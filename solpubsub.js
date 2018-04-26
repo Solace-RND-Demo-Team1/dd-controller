@@ -1,6 +1,7 @@
 var SolPubSub = function () {
     'use strict';
     var solPubSub = {};
+    var trucks = [];
     solPubSub.session = null;
     solPubSub.subscribed = false;
 
@@ -91,11 +92,17 @@ var SolPubSub = function () {
                     };
                     players.splice(position - 1, 1, joinerRow);;
                     solPubSub.reply(message, 'SUCCESS');
+                    solPubSub.publish(JSON.stringify(players), 'dd/t/lobby');
                 } else {
                     solPubSub.reply(message, 'DUP_NAME');
                 }          
             } else if (destination.getName().startsWith('dd/t/active/')) {
-                solPubSub.log(message.getBinaryAttachment());
+                //solPubSub.log(message.getBinaryAttachment());
+                let whichTruck = message.getDestination().getName().split("/");
+                console.log(whichTruck[3]);
+                let truck = whichTruck[3];
+                var truckEvent = JSON.parse(message.getBinaryAttachment());
+                moveCar(truck, truckEvent.steering, truckEvent.accel, 0, 0);
             }            
         });
 

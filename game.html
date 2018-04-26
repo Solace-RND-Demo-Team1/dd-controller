@@ -9,9 +9,14 @@
         <!-- Load Solace Web Messaging API for JavaScript -->
         <script src="solclientjs-10.0.0/lib/solclient-debug.js"></script>
         <script src="env.js"></script>
+       
+        <script src="gamefiles/UnityLoader.js"></script>        
         <script src="solpubsub.js"></script>
+        <script src="controller.js"></script>
 
         <script>
+            var gameInstance = UnityLoader.instantiate("gameContainer", "gamefiles/demolishderby2.json");
+
             var solPubSub = null;
             window.onload = function () {
                 // Initialize factory with the most recent API defaults
@@ -31,7 +36,7 @@
         </script>        
     </head>
     <body>
-
+        <div id="gameContainer"></div>
         
     </body>
 </html>
